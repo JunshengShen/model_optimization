@@ -50,7 +50,7 @@ public:
 		point_code[7] = x_code *q + y_code + (z_code - 1)*q*q;
 		
 		fstream outfile;
-		outfile.open("d://test.txt", ios::app);
+		outfile.open("D:\\oofem\\build2.3\\Debug\\test.txt", ios::app);
 		for (int i = 0; i <= 7; i++)
 		{
 			outfile << point_code[i] << "  ";
@@ -75,7 +75,7 @@ public:
 		point_code[7] = x_code *q + y_code + (z_code - 1)*q*q;
 
 		fstream outfile;
-		outfile.open("d://test1.txt", ios::app);
+		outfile.open("D:\\oofem\\build2.3\\Debug\\test1.txt", ios::app);
 		for (int i = 0; i <= 7; i++)
 		{
 			outfile << point_code[i] << "  ";
@@ -102,7 +102,7 @@ public:
 		point_code[6] = x_code *q + y_code + (z_code - 1)*q*q;
 
 		fstream outfile;
-		outfile.open("d://test2.txt", ios::app);
+		outfile.open("D:\\oofem\\build2.3\\Debug\\test2.txt", ios::app);
 		/*for (int i = 0; i <= 7; i++)
 		{
 			outfile << point_code[i] << "  ";
@@ -146,12 +146,12 @@ public:
 void coor(float max_x, float max_y, float max_z, int level)//Èý¸ö°ü×°ºÐµÄ³ß´ç  ·Ö¸î´ÎÊý
 {
 	double lines = pow(2, level);//¼ÆËãÃ¿Ò»ÐÐÓÐ¶àÉÙÌåËØ   dxdydz·Ö±ðÊÇÈý¸ö·½ÏòÉÏÃ¿¸öÌåËØµÄ³ß´ç
-	float dx = max_x / lines;
-	float dy = max_y / lines;
-	float dz = max_z / lines;
+	double dx = max_x / lines;
+	double dy = max_y / lines;
+	double dz = max_z / lines;
 
 	fstream outfile;
-	outfile.open("d://test.txt", ios::app);
+	outfile.open("D:\\oofem\\build2.3\\Debug\\test.txt", ios::app);
 	int number = 1;
 	lines += 1;
 	for (int i = 0; i < lines; i++)//Êä³öÃ¿¸ö½ÚµãµÄ×ø±ê
@@ -186,12 +186,12 @@ void coor(float max_x, float max_y, float max_z, int level)//Èý¸ö°ü×°ºÐµÄ³ß´ç  ·
 void coor1(float max_x, float max_y, float max_z, int level)//Èý¸ö°ü×°ºÐµÄ³ß´ç  ·Ö¸î´ÎÊý
 {
 	double lines = pow(2, level);//¼ÆËãÃ¿Ò»ÐÐÓÐ¶àÉÙÌåËØ   dxdydz·Ö±ðÊÇÈý¸ö·½ÏòÉÏÃ¿¸öÌåËØµÄ³ß´ç
-	float dx = max_x / lines;
-	float dy = max_y / lines;
-	float dz = max_z / lines;
+	double dx = max_x / lines;
+	double dy = max_y / lines;
+	double dz = max_z / lines;
 
 	fstream outfile;
-	outfile.open("d://test1.txt", ios::app);
+	outfile.open("D:\\oofem\\build2.3\\Debug\\test1.txt", ios::app);
 	int number = 1;
 	lines += 1;
 	for (int i = 0; i < lines; i++)//Êä³öÃ¿¸ö½ÚµãµÄ×ø±ê
@@ -221,12 +221,12 @@ void coor1(float max_x, float max_y, float max_z, int level)//Èý¸ö°ü×°ºÐµÄ³ß´ç  
 void coor2(float max_x, float max_y, float max_z, int level)//Èý¸ö°ü×°ºÐµÄ³ß´ç  ·Ö¸î´ÎÊý
 {
 	double lines = pow(2, level);//¼ÆËãÃ¿Ò»ÐÐÓÐ¶àÉÙÌåËØ   dxdydz·Ö±ðÊÇÈý¸ö·½ÏòÉÏÃ¿¸öÌåËØµÄ³ß´ç
-	float dx = max_x / lines;
-	float dy = max_y / lines;
-	float dz = max_z / lines;
+	double dx = max_x / lines;
+	double dy = max_y / lines;
+	double dz = max_z / lines;
 
 	fstream outfile;
-	outfile.open("d://test2.txt", ios::app);
+	outfile.open("D:\\oofem\\build2.3\\Debug\\test2.txt", ios::app);
 	int number = 1;
 	lines += 1;
 	for (int i = 0; i < lines; i++)//Êä³öÃ¿¸ö½ÚµãµÄ×ø±ê

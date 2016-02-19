@@ -45,8 +45,10 @@
 #include "gl.hh"
 #include <iostream>
 #include <fstream>
-
+#include "suHyperMesh.h"
 #include "tinyfiledialogs.h"
+#include <Windows.h>
+
 
 #define  MENU_FILE_LOAD 1111
 #define  MENU_LABEL_BOUNDARY 1112
@@ -278,7 +280,41 @@ void MeshViewer::processmenu(int i)
 	}
 	if (i == test1_)
 	{
-		hyperMesh_.test1();
+		cout << "type the path\n";
+		char str[256];
+		char *p = str;
+		cin >> str;
+		if (p)
+		{
+			if (this->open_mesh(p))
+			{
+				glutPostRedisplay();
+				std::cout << p << " is openned." << std::endl;
+				num_grid = hyperMesh_.octree.leafNodesArr.size();
+			}
+		}
+		cout << "type the octree level\n";
+		int oct_level;
+		cin >> oct_level;
+		cout << oct_level;
+		hyperMesh_.PartitionSpace(oct_level);
+
+		glutPostRedisplay();
+		std::cout << " octree level: " << oct_level << std::endl;
+		
+		hyperMesh_.LabelBoundaryNode();
+		hyperMesh_.LabelBoundaryNeighbors();
+		glutPostRedisplay();
+
+		hyperMesh_.floodfill();
+		glutPostRedisplay();
+		hyperMesh_.test();
+		//system("cd /d D:\\oofem\\build2.3\\Debug &oofem.exe&oofem -f test.txt");
+		//cout << "oofem done\n";
+		//read_point_information_("D:\\oofem\\build2.3\\Debug\\Majnun.out.m0.1.vtu");
+
+
+
 	}
 	if (i >= MENU_FILE_LOAD)
 	{
@@ -287,6 +323,9 @@ void MeshViewer::processmenu(int i)
 		{
 			const char* const  extFilename[] = { "*.stl", "*.ply", "*.obj" };
 			const char *p = tinyfd_openFileDialog("Open model", "c:\\", 3, extFilename, NULL, 0);
+			//char str[256];
+			//char *p = str;
+			//cin >> str;
 			if (p)
 			{
 				if (this->open_mesh(p))
@@ -302,6 +341,9 @@ void MeshViewer::processmenu(int i)
 			{
 				const char* const  extFilename[] = { "*.vtk" };
 				const char *p = tinyfd_saveFileDialog("Save model", "c:\\", 1, extFilename, NULL);
+
+				
+
 				if (p)
 				{
 					//save to vtk format

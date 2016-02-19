@@ -5,6 +5,10 @@
 #include "voxel_output.h"
 #include "envolution.h"
 #include "evo_lib.h"
+#include "MeshViewer.h"
+#include <Windows.h>
+
+using namespace std;
 bool suHyperMesh::LoadMeshFromFile(const char *pFileName)
 {
 	if (!pFileName)
@@ -35,6 +39,7 @@ bool suHyperMesh::LoadMeshFromFile(const char *pFileName)
 		createMeshObject();
 		isLoad_ = true;
 	}
+
 	return isLoad_;
 }
 
@@ -494,6 +499,43 @@ int voxel_min;
 
 bool suHyperMesh::test1(float dx, float dy, float dz)
 {
+	int oct_level;
+	cin >> oct_level;
+	
+	string file;
+	cin >> file;
+	//if (!file)
+	//	return false;
+
+	if (isLoad_)
+	{
+		clear();
+		isLoad_ = false;
+	}
+
+	if (OpenMesh::IO::read_mesh(mesh, file))
+	{
+		suMesh::ConstVertexIter  v_it(mesh.vertices_begin()),
+			v_end(mesh.vertices_end());
+
+		bbMin = bbMax = mesh.point(v_it);
+		for (; v_it != v_end; ++v_it)
+		{
+			bbMin.minimize(mesh.point(v_it));
+			bbMax.maximize(mesh.point(v_it));
+		}
+
+		// compute face & vertex normals
+		mesh.update_normals();
+
+		//Create a mesh object (by mesh_query lib)
+		createMeshObject();
+		isLoad_ = true;
+	}
+
+
+
+	return isLoad_;	
 	//输入中要加入材料属性与要求   暂时不做 12.29
 	//初始化加入到循环中（体素化  元胞初始化）然后开始演化(基于规则的推理过程）
 	//演化结束调用外部工具 等待结束 读入结果
@@ -508,9 +550,9 @@ bool suHyperMesh::test1(float dx, float dy, float dz)
 	 ///oofem()
 	 ///do_=if_do()
 		
+	//read_point_information("d://KITTEN.out.m0.1.vtu");
 
-
-	return 0;
+	//return 0;
 }
 
 bool suHyperMesh::test(float dx,float dy, float dz)
@@ -547,9 +589,14 @@ bool suHyperMesh::test(float dx,float dy, float dz)
 	int count = 0;//在后面输出txt文件时输出体素的编号
 	int voxel_number = 0;
 	cout << octree.level_ << endl;
-
+	string test_dir;
+	test_dir = "D:\\oofem\\build2.3\\Debug\\test.txt";
+	string test1_dir;
+	test1_dir = "D:\\oofem\\build2.3\\Debug\\test1.txt";
+	string test2_dir;
+	test2_dir = "D:\\oofem\\build2.3\\Debug\\test2.txt";
 	fstream outfile;
-	outfile.open("d://test.txt", ios::out);
+	outfile.open(test_dir, ios::out);
 	outfile.close();
 
 
@@ -628,7 +675,7 @@ bool suHyperMesh::test(float dx,float dy, float dz)
 	}
 	//fstream outfile;
 
-	outfile.open("d://test.txt", ios::app);
+	outfile.open(test_dir, ios::app);
 	outfile << "Majnun.out" << endl;
 	outfile << "test of Brick elements with nlgeo 1(strain is the Green-Lagrangian strain) rotated as a rigid body" << endl;
 	outfile << "#NonLinearStatic  nmsteps 1 nsteps 1 " << endl;
@@ -675,7 +722,7 @@ bool suHyperMesh::test(float dx,float dy, float dz)
 					{
 						//vtk << 1 << " ";
 						fstream outfile;
-						outfile.open("d://test.txt", ios::app);
+						outfile.open(test_dir, ios::app);
 						//outfile << pNode->xLocCode_ << "  " << pNode->yLocCode_ << "  " << pNode->zLocCode_ << "  " << pNode->level_ << "  " << pNode->label_ << "  ";
 						//outfile << IndexX << "  " << IndexY<< "  " << IndexZ;
 						outfile << "LSpace " << ++count << "	 nodes  8 ";
@@ -702,7 +749,7 @@ bool suHyperMesh::test(float dx,float dy, float dz)
 					{
 						//vtk << 2 << " ";
 						fstream outfile;
-						outfile.open("d://test.txt", ios::app);
+						outfile.open(test_dir, ios::app);
 						//outfile << pNode->xLocCode_ << "  " << pNode->yLocCode_ << "  " << pNode->zLocCode_ << "  " << pNode->level_ << "  " << pNode->label_ << "  ";
 						//outfile << IndexX << "  " << IndexY << "  " << IndexZ;
 						outfile << "LSpace " << ++count << "	 nodes  8 ";
@@ -739,7 +786,7 @@ bool suHyperMesh::test(float dx,float dy, float dz)
 		//vtk << endl;
 	}
 	//fstream outfile;
-	outfile.open("d://test.txt", ios::app);
+	outfile.open(test_dir, ios::app);
 	outfile << "SimpleCS 1" << endl << "IsoLE 1 d 0. E 15.0 n 0.25 talpha 1.0" << endl << "BoundaryCondition  1 loadTimeFunction 1 prescribedvalue 0.0" << endl << "BoundaryCondition  2 loadTimeFunction 1 prescribedvalue 0.5" << endl << "PiecewiseLinFunction 1 npoints 2 t 2 0. 1000. f(t) 2 0. 1000." << endl;
 	outfile.close();
 
@@ -818,7 +865,8 @@ bool suHyperMesh::test(float dx,float dy, float dz)
 	//判断 多个规则并行判断  把规则做成规则行书（不是循环条件）  现在有三个规则
 	//反馈做成一个状态
 	for (int k = 1; k <= 6; k++)
-	{ 
+	{
+		
 		for (int i = 0; i < count; i++)
 		{
 			if (auto_cell[ca[i]].lable == 0 && auto_cell[ca[i]].out == 1)
@@ -873,381 +921,378 @@ bool suHyperMesh::test(float dx,float dy, float dz)
 		}
 		cout << k << ":" << void_voxel << ";" << count << endl;
 		void_voxel = 0;
-		
-	}
-	cout << "min=" << count-voxel_min;
+
+
+		cout << "min=" << count - voxel_min;
 
 
 
 
-	fstream outstl;
-	outstl.open("d://STL.stl", ios::out);
-	outstl << "solid \"sample\"" << endl;
-	outstl.close();
-	for (int i = 0; i < count; i++)
-	{
-		if (auto_cell[ca[i]].out == 1)
+		fstream outstl;
+		outstl.open("d://STL.stl", ios::out);
+		outstl << "solid \"sample\"" << endl;
+		outstl.close();
+		for (int i = 0; i < count; i++)
 		{
-			int *n_merton = six_n_merton(ca[i], octree.level_);
-			/*cout << "(" << ca[i] << ")" << endl;
-
-			for (int j = 0; j < 6; j++)
+			if (auto_cell[ca[i]].out == 1)
 			{
+				int *n_merton = six_n_merton(ca[i], octree.level_);
+				/*cout << "(" << ca[i] << ")" << endl;
+
+				for (int j = 0; j < 6; j++)
+				{
 				cout << "merton:" << n_merton[j] << " ";
-			}
-			*/
-			int *code_ = code(ca[i], octree.level_);
-			/*for (int j = 0; j < 3; j++)
-			{
+				}
+				*/
+				int *code_ = code(ca[i], octree.level_);
+				/*for (int j = 0; j < 3; j++)
+				{
 				cout << "code:" << code_[j] << " ";
-			}*/
+				}*/
 
-			if (code_[0] == (pow(2, octree.level_) - 1))
-			{
-				outstl.open("d://STL.stl", ios::app);
-				outstl << "  facet normal " << "1 0 0" << endl;
-				outstl << "    outer loop" << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << (code_[1] - 1)*dy << ' ' << (code_[2] - 1)*dz << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1)*dz << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << (code_[2] * dz) << endl;
-				outstl << "    endloop" << endl;
-				outstl << "  endfacet" << endl;
-
-
-				outstl << "  facet normal " << "1 0 0" << endl;
-				outstl << "    outer loop" << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << code_[2] * dz << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << (code_[1] - 1) * dy << ' ' << code_[2] * dz << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << (code_[1] - 1) * dy << ' ' << (code_[2] - 1) *dz << endl;
-				outstl << "    endloop" << endl;
-				outstl << "  endfacet" << endl;
-
-				outstl.close();
-			}
-			else if (auto_cell[n_merton[0]].out == 0)//x+
-			{
-				outstl.open("d://STL.stl", ios::app);
-				outstl << "  facet normal " << "1 0 0" << endl;
-				outstl << "    outer loop" << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << (code_[1] - 1)*dy << ' ' << (code_[2] - 1)*dz << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1)*dz << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << (code_[2] * dz) << endl;
-				outstl << "    endloop" << endl;
-				outstl << "  endfacet" << endl;
+				if (code_[0] == (pow(2, octree.level_) - 1))
+				{
+					outstl.open("d://STL.stl", ios::app);
+					outstl << "  facet normal " << "1 0 0" << endl;
+					outstl << "    outer loop" << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << (code_[1] - 1)*dy << ' ' << (code_[2] - 1)*dz << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1)*dz << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << (code_[2] * dz) << endl;
+					outstl << "    endloop" << endl;
+					outstl << "  endfacet" << endl;
 
 
-				outstl << "  facet normal " << "1 0 0" << endl;
-				outstl << "    outer loop" << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << code_[2] * dz << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << (code_[1] - 1) * dy << ' ' << code_[2] * dz << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << (code_[1] - 1) * dy << ' ' << (code_[2] - 1) *dz << endl;
-				outstl << "    endloop" << endl;
-				outstl << "  endfacet" << endl;
+					outstl << "  facet normal " << "1 0 0" << endl;
+					outstl << "    outer loop" << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << code_[2] * dz << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << (code_[1] - 1) * dy << ' ' << code_[2] * dz << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << (code_[1] - 1) * dy << ' ' << (code_[2] - 1) *dz << endl;
+					outstl << "    endloop" << endl;
+					outstl << "  endfacet" << endl;
 
-				outstl.close();
-
-
-
-			}
-			if (code_[0] == 0)
-			{
-				outstl.open("d://STL.stl", ios::app);
-				outstl << "  facet normal " << "-1 0 0" << endl;
-				outstl << "    outer loop" << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1)*dz << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1) * dy << ' ' << (code_[2] - 1)*dz << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1) * dy << ' ' << (code_[2] * dz) << endl;
-				outstl << "    endloop" << endl;
-				outstl << "  endfacet" << endl;
+					outstl.close();
+				}
+				else if (auto_cell[n_merton[0]].out == 0)//x+
+				{
+					outstl.open("d://STL.stl", ios::app);
+					outstl << "  facet normal " << "1 0 0" << endl;
+					outstl << "    outer loop" << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << (code_[1] - 1)*dy << ' ' << (code_[2] - 1)*dz << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1)*dz << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << (code_[2] * dz) << endl;
+					outstl << "    endloop" << endl;
+					outstl << "  endfacet" << endl;
 
 
-				outstl << "  facet normal " << "-1 0 0" << endl;
-				outstl << "    outer loop" << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1)*dy << ' ' << code_[2] * dz << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << code_[1] * dy << ' ' << code_[2] * dz << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1) * dz << endl;
-				outstl << "    endloop" << endl;
-				outstl << "  endfacet" << endl;
+					outstl << "  facet normal " << "1 0 0" << endl;
+					outstl << "    outer loop" << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << code_[2] * dz << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << (code_[1] - 1) * dy << ' ' << code_[2] * dz << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << (code_[1] - 1) * dy << ' ' << (code_[2] - 1) *dz << endl;
+					outstl << "    endloop" << endl;
+					outstl << "  endfacet" << endl;
 
-				outstl.close();
-			}
-			else if (auto_cell[n_merton[1]].out == 0)//x-
-			{
-				outstl.open("d://STL.stl", ios::app);
-				outstl << "  facet normal " << "-1 0 0" << endl;
-				outstl << "    outer loop" << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1)*dz << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1) * dy << ' ' << (code_[2] - 1)*dz << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1) * dy << ' ' << (code_[2] * dz) << endl;
-				outstl << "    endloop" << endl;
-				outstl << "  endfacet" << endl;
+					outstl.close();
 
 
-				outstl << "  facet normal " << "-1 0 0" << endl;
-				outstl << "    outer loop" << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1)*dy << ' ' << code_[2] * dz << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << code_[1] * dy << ' ' << code_[2] * dz << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1) * dz << endl;
-				outstl << "    endloop" << endl;
-				outstl << "  endfacet" << endl;
 
-				outstl.close();
-			}
-			if (code_[1] == (pow(2, octree.level_) - 1))
-			{
-				outstl.open("d://STL.stl", ios::app);
-				outstl << "  facet normal " << "0 1 0" << endl;
-				outstl << "    outer loop" << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1)*dz << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1)*dz << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << code_[1] * dy << ' ' << code_[2] * dz << endl;
-				outstl << "    endloop" << endl;
-				outstl << "  endfacet" << endl;
+				}
+				if (code_[0] == 0)
+				{
+					outstl.open("d://STL.stl", ios::app);
+					outstl << "  facet normal " << "-1 0 0" << endl;
+					outstl << "    outer loop" << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1)*dz << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1) * dy << ' ' << (code_[2] - 1)*dz << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1) * dy << ' ' << (code_[2] * dz) << endl;
+					outstl << "    endloop" << endl;
+					outstl << "  endfacet" << endl;
 
 
-				outstl << "  facet normal " << "0 1 0" << endl;
-				outstl << "    outer loop" << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << code_[1] * dy << ' ' << code_[2] * dz << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << code_[2] * dz << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1) * dz << endl;
-				outstl << "    endloop" << endl;
-				outstl << "  endfacet" << endl;
+					outstl << "  facet normal " << "-1 0 0" << endl;
+					outstl << "    outer loop" << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1)*dy << ' ' << code_[2] * dz << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << code_[1] * dy << ' ' << code_[2] * dz << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1) * dz << endl;
+					outstl << "    endloop" << endl;
+					outstl << "  endfacet" << endl;
 
-				outstl.close();
-			}
-			else if (auto_cell[n_merton[2]].out == 0)//y+
-			{
-				outstl.open("d://STL.stl", ios::app);
-				outstl << "  facet normal " << "0 1 0" << endl;
-				outstl << "    outer loop" << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1)*dz << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1)*dz << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << code_[1] * dy << ' ' << code_[2] * dz << endl;
-				outstl << "    endloop" << endl;
-				outstl << "  endfacet" << endl;
-
-
-				outstl << "  facet normal " << "0 1 0" << endl;
-				outstl << "    outer loop" << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << code_[1] * dy << ' ' << code_[2] * dz << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << code_[2] * dz << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1) * dz << endl;
-				outstl << "    endloop" << endl;
-				outstl << "  endfacet" << endl;
-
-				outstl.close();
-			}
-			if (code_[1] == 0)
-			{
-				outstl.open("d://STL.stl", ios::app);
-				outstl << "  facet normal " << "0 -1 0" << endl;
-				outstl << "    outer loop" << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1) * dy << ' ' << (code_[2] - 1)*dz << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << (code_[1] - 1) * dy << ' ' << (code_[2] - 1)*dz << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << (code_[1] - 1) * dy << ' ' << code_[2] * dz << endl;
-				outstl << "    endloop" << endl;
-				outstl << "  endfacet" << endl;
+					outstl.close();
+				}
+				else if (auto_cell[n_merton[1]].out == 0)//x-
+				{
+					outstl.open("d://STL.stl", ios::app);
+					outstl << "  facet normal " << "-1 0 0" << endl;
+					outstl << "    outer loop" << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1)*dz << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1) * dy << ' ' << (code_[2] - 1)*dz << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1) * dy << ' ' << (code_[2] * dz) << endl;
+					outstl << "    endloop" << endl;
+					outstl << "  endfacet" << endl;
 
 
-				outstl << "  facet normal " << "0 -1 0" << endl;
-				outstl << "    outer loop" << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << (code_[1] - 1) * dy << ' ' << code_[2] * dz << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1) * dy << ' ' << code_[2] * dz << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1) * dy << ' ' << (code_[2] - 1) * dz << endl;
-				outstl << "    endloop" << endl;
-				outstl << "  endfacet" << endl;
+					outstl << "  facet normal " << "-1 0 0" << endl;
+					outstl << "    outer loop" << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1)*dy << ' ' << code_[2] * dz << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << code_[1] * dy << ' ' << code_[2] * dz << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1) * dz << endl;
+					outstl << "    endloop" << endl;
+					outstl << "  endfacet" << endl;
 
-				outstl.close();
-			}
-			else if (auto_cell[n_merton[3]].out == 0)//y-
-			{
-				outstl.open("d://STL.stl", ios::app);
-				outstl << "  facet normal " << "0 -1 0" << endl;
-				outstl << "    outer loop" << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1) * dy << ' ' << (code_[2] - 1)*dz << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << (code_[1] - 1) * dy << ' ' << (code_[2] - 1)*dz << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << (code_[1] - 1) * dy << ' ' << code_[2] * dz << endl;
-				outstl << "    endloop" << endl;
-				outstl << "  endfacet" << endl;
-
-
-				outstl << "  facet normal " << "0 -1 0" << endl;
-				outstl << "    outer loop" << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << (code_[1] - 1) * dy << ' ' << code_[2] * dz << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1) * dy << ' ' << code_[2] * dz << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1) * dy << ' ' << (code_[2] - 1) * dz << endl;
-				outstl << "    endloop" << endl;
-				outstl << "  endfacet" << endl;
-
-				outstl.close();
-			}
-			if (code_[2] == (pow(2, octree.level_) - 1))
-			{
-				outstl.open("d://STL.stl", ios::app);
-				outstl << "  facet normal " << "0 0 1" << endl;
-				outstl << "    outer loop" << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << code_[2] * dz << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << code_[1] * dy << ' ' << code_[2] * dz << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1) * dy << ' ' << code_[2] * dz << endl;
-				outstl << "    endloop" << endl;
-				outstl << "  endfacet" << endl;
+					outstl.close();
+				}
+				if (code_[1] == (pow(2, octree.level_) - 1))
+				{
+					outstl.open("d://STL.stl", ios::app);
+					outstl << "  facet normal " << "0 1 0" << endl;
+					outstl << "    outer loop" << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1)*dz << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1)*dz << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << code_[1] * dy << ' ' << code_[2] * dz << endl;
+					outstl << "    endloop" << endl;
+					outstl << "  endfacet" << endl;
 
 
-				outstl << "  facet normal " << "0 0 1" << endl;
-				outstl << "    outer loop" << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1)*dy << ' ' << code_[2] * dz << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << (code_[1] - 1) * dy << ' ' << code_[2] * dz << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << code_[2] * dz << endl;
-				outstl << "    endloop" << endl;
-				outstl << "  endfacet" << endl;
+					outstl << "  facet normal " << "0 1 0" << endl;
+					outstl << "    outer loop" << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << code_[1] * dy << ' ' << code_[2] * dz << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << code_[2] * dz << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1) * dz << endl;
+					outstl << "    endloop" << endl;
+					outstl << "  endfacet" << endl;
 
-				outstl.close();
-			}
-			else if (auto_cell[n_merton[4]].out == 0)//z+
-			{
-				outstl.open("d://STL.stl", ios::app);
-				outstl << "  facet normal " << "0 0 1" << endl;
-				outstl << "    outer loop" << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << code_[2] * dz << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << code_[1] * dy << ' ' << code_[2] * dz << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1) * dy << ' ' << code_[2] * dz << endl;
-				outstl << "    endloop" << endl;
-				outstl << "  endfacet" << endl;
-
-
-				outstl << "  facet normal " << "0 0 1" << endl;
-				outstl << "    outer loop" << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1)*dy << ' ' << code_[2] * dz << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << (code_[1] - 1) * dy << ' ' << code_[2] * dz << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << code_[2] * dz << endl;
-				outstl << "    endloop" << endl;
-				outstl << "  endfacet" << endl;
-
-				outstl.close();
-			}
-			if (code_[2] == 0)
-			{
-				outstl.open("d://STL.stl", ios::app);
-				outstl << "  facet normal " << "0 0 1" << endl;
-				outstl << "    outer loop" << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1) * dz << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1) * dz << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1) * dy << ' ' << (code_[2] - 1) * dz << endl;
-				outstl << "    endloop" << endl;
-				outstl << "  endfacet" << endl;
+					outstl.close();
+				}
+				else if (auto_cell[n_merton[2]].out == 0)//y+
+				{
+					outstl.open("d://STL.stl", ios::app);
+					outstl << "  facet normal " << "0 1 0" << endl;
+					outstl << "    outer loop" << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1)*dz << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1)*dz << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << code_[1] * dy << ' ' << code_[2] * dz << endl;
+					outstl << "    endloop" << endl;
+					outstl << "  endfacet" << endl;
 
 
-				outstl << "  facet normal " << "0 0 1" << endl;
-				outstl << "    outer loop" << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1)*dy << ' ' << (code_[2] - 1) * dz << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << (code_[1] - 1) * dy << ' ' << (code_[2] - 1) * dz << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1) * dz << endl;
-				outstl << "    endloop" << endl;
-				outstl << "  endfacet" << endl;
+					outstl << "  facet normal " << "0 1 0" << endl;
+					outstl << "    outer loop" << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << code_[1] * dy << ' ' << code_[2] * dz << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << code_[2] * dz << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1) * dz << endl;
+					outstl << "    endloop" << endl;
+					outstl << "  endfacet" << endl;
 
-				outstl.close();
-			}
-			else if (auto_cell[n_merton[5]].out == 0)//z-
-			{
-				outstl.open("d://STL.stl", ios::app);
-				outstl << "  facet normal " << "0 0 1" << endl;
-				outstl << "    outer loop" << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1) * dz << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1) * dz << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1) * dy << ' ' << (code_[2] - 1) * dz << endl;
-				outstl << "    endloop" << endl;
-				outstl << "  endfacet" << endl;
+					outstl.close();
+				}
+				if (code_[1] == 0)
+				{
+					outstl.open("d://STL.stl", ios::app);
+					outstl << "  facet normal " << "0 -1 0" << endl;
+					outstl << "    outer loop" << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1) * dy << ' ' << (code_[2] - 1)*dz << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << (code_[1] - 1) * dy << ' ' << (code_[2] - 1)*dz << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << (code_[1] - 1) * dy << ' ' << code_[2] * dz << endl;
+					outstl << "    endloop" << endl;
+					outstl << "  endfacet" << endl;
 
 
-				outstl << "  facet normal " << "0 0 1" << endl;
-				outstl << "    outer loop" << endl;
-				outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1)*dy << ' ' << (code_[2] - 1) * dz << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << (code_[1] - 1) * dy << ' ' << (code_[2] - 1) * dz << endl;
-				outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1) * dz << endl;
-				outstl << "    endloop" << endl;
-				outstl << "  endfacet" << endl;
+					outstl << "  facet normal " << "0 -1 0" << endl;
+					outstl << "    outer loop" << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << (code_[1] - 1) * dy << ' ' << code_[2] * dz << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1) * dy << ' ' << code_[2] * dz << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1) * dy << ' ' << (code_[2] - 1) * dz << endl;
+					outstl << "    endloop" << endl;
+					outstl << "  endfacet" << endl;
 
-				outstl.close();
+					outstl.close();
+				}
+				else if (auto_cell[n_merton[3]].out == 0)//y-
+				{
+					outstl.open("d://STL.stl", ios::app);
+					outstl << "  facet normal " << "0 -1 0" << endl;
+					outstl << "    outer loop" << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1) * dy << ' ' << (code_[2] - 1)*dz << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << (code_[1] - 1) * dy << ' ' << (code_[2] - 1)*dz << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << (code_[1] - 1) * dy << ' ' << code_[2] * dz << endl;
+					outstl << "    endloop" << endl;
+					outstl << "  endfacet" << endl;
+
+
+					outstl << "  facet normal " << "0 -1 0" << endl;
+					outstl << "    outer loop" << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << (code_[1] - 1) * dy << ' ' << code_[2] * dz << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1) * dy << ' ' << code_[2] * dz << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1) * dy << ' ' << (code_[2] - 1) * dz << endl;
+					outstl << "    endloop" << endl;
+					outstl << "  endfacet" << endl;
+
+					outstl.close();
+				}
+				if (code_[2] == (pow(2, octree.level_) - 1))
+				{
+					outstl.open("d://STL.stl", ios::app);
+					outstl << "  facet normal " << "0 0 1" << endl;
+					outstl << "    outer loop" << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << code_[2] * dz << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << code_[1] * dy << ' ' << code_[2] * dz << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1) * dy << ' ' << code_[2] * dz << endl;
+					outstl << "    endloop" << endl;
+					outstl << "  endfacet" << endl;
+
+
+					outstl << "  facet normal " << "0 0 1" << endl;
+					outstl << "    outer loop" << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1)*dy << ' ' << code_[2] * dz << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << (code_[1] - 1) * dy << ' ' << code_[2] * dz << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << code_[2] * dz << endl;
+					outstl << "    endloop" << endl;
+					outstl << "  endfacet" << endl;
+
+					outstl.close();
+				}
+				else if (auto_cell[n_merton[4]].out == 0)//z+
+				{
+					outstl.open("d://STL.stl", ios::app);
+					outstl << "  facet normal " << "0 0 1" << endl;
+					outstl << "    outer loop" << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << code_[2] * dz << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << code_[1] * dy << ' ' << code_[2] * dz << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1) * dy << ' ' << code_[2] * dz << endl;
+					outstl << "    endloop" << endl;
+					outstl << "  endfacet" << endl;
+
+
+					outstl << "  facet normal " << "0 0 1" << endl;
+					outstl << "    outer loop" << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1)*dy << ' ' << code_[2] * dz << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << (code_[1] - 1) * dy << ' ' << code_[2] * dz << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << code_[2] * dz << endl;
+					outstl << "    endloop" << endl;
+					outstl << "  endfacet" << endl;
+
+					outstl.close();
+				}
+				if (code_[2] == 0)
+				{
+					outstl.open("d://STL.stl", ios::app);
+					outstl << "  facet normal " << "0 0 1" << endl;
+					outstl << "    outer loop" << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1) * dz << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1) * dz << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1) * dy << ' ' << (code_[2] - 1) * dz << endl;
+					outstl << "    endloop" << endl;
+					outstl << "  endfacet" << endl;
+
+
+					outstl << "  facet normal " << "0 0 1" << endl;
+					outstl << "    outer loop" << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1)*dy << ' ' << (code_[2] - 1) * dz << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << (code_[1] - 1) * dy << ' ' << (code_[2] - 1) * dz << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1) * dz << endl;
+					outstl << "    endloop" << endl;
+					outstl << "  endfacet" << endl;
+
+					outstl.close();
+				}
+				else if (auto_cell[n_merton[5]].out == 0)//z-
+				{
+					outstl.open("d://STL.stl", ios::app);
+					outstl << "  facet normal " << "0 0 1" << endl;
+					outstl << "    outer loop" << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1) * dz << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1) * dz << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1) * dy << ' ' << (code_[2] - 1) * dz << endl;
+					outstl << "    endloop" << endl;
+					outstl << "  endfacet" << endl;
+
+
+					outstl << "  facet normal " << "0 0 1" << endl;
+					outstl << "    outer loop" << endl;
+					outstl << "      vertex " << (code_[0] - 1) * dx << ' ' << (code_[1] - 1)*dy << ' ' << (code_[2] - 1) * dz << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << (code_[1] - 1) * dy << ' ' << (code_[2] - 1) * dz << endl;
+					outstl << "      vertex " << code_[0] * dx << ' ' << code_[1] * dy << ' ' << (code_[2] - 1) * dz << endl;
+					outstl << "    endloop" << endl;
+					outstl << "  endfacet" << endl;
+
+					outstl.close();
+				}
 			}
 		}
-	}
-	outstl.open("d://STL.stl", ios::app);
-	outstl << "endsolid \"sample\"";
+		outstl.open("d://STL.stl", ios::app);
+		outstl << "endsolid \"sample\"";
 
 
 
 
-	
-
-	int voxel_number1 = 0;
 
 
-	for (int i = 0; i < count; i++)
-	{
-		if (auto_cell[ca[i]].out == 1)
+		int voxel_number1 = 0;
+
+
+		for (int i = 0; i < count; i++)
 		{
-			voxel_number1++;
-			//fstream outfile;
-			//outfile.open("d://test1.txt", ios::app);
-			//int *asddd = code(ca[i], octree.level_);
-			//outfile << pNode->xLocCode_ << "  " << pNode->yLocCode_ << "  " << pNode->zLocCode_ << "  " << pNode->level_ << "  " << pNode->label_ << "  ";
-			//outfile << IndexX << "  " << IndexY << "  " << IndexZ;
-			//outfile << "LSpace " << ++fuck << "	 nodes  8 ";
-			//voxel_output* asd = new voxel_output(asddd[0], asddd[1], asddd[2], octree.level_);
-			//outfile.close();
-			//voxel_output asd(pChildNode, level);
-			//asd->output_point1();
-			//delete asd;
+			if (auto_cell[ca[i]].out == 1)
+			{
+				voxel_number1++;
+				//fstream outfile;
+				//outfile.open("d://test1.txt", ios::app);
+				//int *asddd = code(ca[i], octree.level_);
+				//outfile << pNode->xLocCode_ << "  " << pNode->yLocCode_ << "  " << pNode->zLocCode_ << "  " << pNode->level_ << "  " << pNode->label_ << "  ";
+				//outfile << IndexX << "  " << IndexY << "  " << IndexZ;
+				//outfile << "LSpace " << ++fuck << "	 nodes  8 ";
+				//voxel_output* asd = new voxel_output(asddd[0], asddd[1], asddd[2], octree.level_);
+				//outfile.close();
+				//voxel_output asd(pChildNode, level);
+				//asd->output_point1();
+				//delete asd;
+			}
 		}
-	}
 
-	outfile.open("d://test1.txt", ios::out);
-	outfile << "Majnun.out" << endl;
-	outfile << "test of Brick elements with nlgeo 1(strain is the Green-Lagrangian strain) rotated as a rigid body" << endl;
-	outfile << "#NonLinearStatic  nmsteps 1 nsteps 1 " << endl;
-	outfile << "#LinearStatic  nmsteps 1 nsteps 1 " << endl;
-	outfile << "#nsteps 5 rtolv 1.e-6 stiffMode 1 controlmode 1 maxiter 100" << endl;
-	outfile << "#vtkxml tstep_all domain_all primvars 1 1 vars 2 4 1 stype 1" << endl;
-	outfile << "#domain 3d" << endl;
-	outfile << "#OutputManager tstep_all dofman_all element_all" << endl;
-	outfile << "LinearStatic nsteps 3 nmodules 1" << endl;
-	outfile << "vtkxml tstep_all domain_all primvars 1 1 vars 2 4 1 stype 1" << endl;
-	outfile << "domain 3d" << endl;
-	outfile << "OutputManager tstep_all dofman_all element_all" << endl;
-	outfile << "ndofman " << pow((pow(2, octree.level_) + 1), 3) << " nelem " << voxel_number1 << " ncrosssect 1 nmat 1 nbc 2 nic 0 nltf 1 " << endl;
-	outfile.close();
-	coor1(vSize.x, vSize.y, vSize.z, octree.level_);
-
+		outfile.open(test1_dir, ios::out);
+		outfile << "Majnun.out" << endl;
+		outfile << "test of Brick elements with nlgeo 1(strain is the Green-Lagrangian strain) rotated as a rigid body" << endl;
+		outfile << "#NonLinearStatic  nmsteps 1 nsteps 1 " << endl;
+		outfile << "#LinearStatic  nmsteps 1 nsteps 1 " << endl;
+		outfile << "#nsteps 5 rtolv 1.e-6 stiffMode 1 controlmode 1 maxiter 100" << endl;
+		outfile << "#vtkxml tstep_all domain_all primvars 1 1 vars 2 4 1 stype 1" << endl;
+		outfile << "#domain 3d" << endl;
+		outfile << "#OutputManager tstep_all dofman_all element_all" << endl;
+		outfile << "LinearStatic nsteps 3 nmodules 1" << endl;
+		outfile << "vtkxml tstep_all domain_all primvars 1 1 vars 2 4 1 stype 1" << endl;
+		outfile << "domain 3d" << endl;
+		outfile << "OutputManager tstep_all dofman_all element_all" << endl;
+		outfile << "ndofman " << pow((pow(2, octree.level_) + 1), 3) << " nelem " << voxel_number1 << " ncrosssect 1 nmat 1 nbc 2 nic 0 nltf 1 " << endl;
+		outfile.close();
+		coor1(vSize.x, vSize.y, vSize.z, octree.level_);
 
 
 
-	int temp_count = 0;
-	for (int i = 0; i < count; i++)
-	{
-		if (auto_cell[ca[i]].out == 1)
+
+		int temp_count = 0;
+		for (int i = 0; i < count; i++)
 		{
-			fstream outfile;
-			outfile.open("d://test1.txt", ios::app);
-			int *asddd = code(ca[i], octree.level_);
-			//outfile << pNode->xLocCode_ << "  " << pNode->yLocCode_ << "  " << pNode->zLocCode_ << "  " << pNode->level_ << "  " << pNode->label_ << "  ";
-			//outfile << IndexX << "  " << IndexY << "  " << IndexZ;
-			outfile << "LSpace " << ++temp_count << "	 nodes  8 ";
-			voxel_output* asd = new voxel_output(asddd[0], asddd[1], asddd[2], octree.level_);
-			outfile.close();
-			//voxel_output asd(pChildNode, level);
-			asd->output_point1();
-			delete asd;
+			if (auto_cell[ca[i]].out == 1)
+			{
+				fstream outfile;
+				outfile.open(test1_dir, ios::app);
+				int *asddd = code(ca[i], octree.level_);
+				//outfile << pNode->xLocCode_ << "  " << pNode->yLocCode_ << "  " << pNode->zLocCode_ << "  " << pNode->level_ << "  " << pNode->label_ << "  ";
+				//outfile << IndexX << "  " << IndexY << "  " << IndexZ;
+				outfile << "LSpace " << ++temp_count << "	 nodes  8 ";
+				voxel_output* asd = new voxel_output(asddd[0], asddd[1], asddd[2], octree.level_);
+				outfile.close();
+				//voxel_output asd(pChildNode, level);
+				asd->output_point1();
+				delete asd;
+			}
 		}
-	}
 
 
 
-	outfile.open("d://test1.txt", ios::app);
-	outfile << "SimpleCS 1" << endl << "IsoLE 1 d 0. E 15.0 n 0.25 talpha 1.0" << endl << "BoundaryCondition  1 loadTimeFunction 1 prescribedvalue 0.0" << endl << "BoundaryCondition  2 loadTimeFunction 1 prescribedvalue 0.5" << endl << "PiecewiseLinFunction 1 npoints 2 t 2 0. 1000. f(t) 2 0. 1000." << endl;
-	outfile.close();
-
-
-
+		outfile.open(test1_dir, ios::app);
+		outfile << "SimpleCS 1" << endl << "IsoLE 1 d 0. E 15.0 n 0.25 talpha 1.0" << endl << "BoundaryCondition  1 loadTimeFunction 1 prescribedvalue 0.0" << endl << "BoundaryCondition  2 loadTimeFunction 1 prescribedvalue 0.5" << endl << "PiecewiseLinFunction 1 npoints 2 t 2 0. 1000. f(t) 2 0. 1000." << endl;
+		outfile.close();
 
 
 
@@ -1262,51 +1307,56 @@ bool suHyperMesh::test(float dx,float dy, float dz)
 
 
 
-	outfile.open("d://test2.txt", ios::out);
-	outfile << "Majnun.out" << endl;
-	outfile << "Simple bending of a cantilever beam, quadratic elements." << endl;
-	outfile << "LinearStatic nsteps 2 controllmode 1 rtolv 1.e-3 nmodules 1" << endl;
-	outfile << "vtkxml tstep_all domain_all primvars 1 1 vars 6 1 2 4 5 27 28 stype 1" << endl;
-	outfile << "domain 3d" << endl;
-	outfile << "OutputManager tstep_all dofman_all element_all" << endl;
-	outfile << "ndofman " << pow((pow(2, octree.level_) + 1), 3) << " nelem " << voxel_number1 * 5 << " ncrosssect 1 nmat 1 nbc 2 nic 0 nltf 1" << endl;
-	outfile.close();
-	coor2(vSize.x, vSize.y, vSize.z, octree.level_);
+
+
+
+		outfile.open(test2_dir, ios::out);
+		outfile << "Majnun.out" << endl;
+		outfile << "Simple bending of a cantilever beam, quadratic elements." << endl;
+		outfile << "LinearStatic nsteps 2 controllmode 1 rtolv 1.e-3 nmodules 1" << endl;
+		outfile << "vtkxml tstep_all domain_all primvars 1 1 vars 6 1 2 4 5 27 28 stype 1" << endl;
+		outfile << "domain 3d" << endl;
+		outfile << "OutputManager tstep_all dofman_all element_all" << endl;
+		outfile << "ndofman " << pow((pow(2, octree.level_) + 1), 3) << " nelem " << voxel_number1 * 5 << " ncrosssect 1 nmat 1 nbc 2 nic 0 nltf 1" << endl;
+		outfile.close();
+		coor2(vSize.x, vSize.y, vSize.z, octree.level_);
 
 
 
 
-	int number = 0;//一个六面体体素生成四个四个四面体体素
-	for (int i = 0; i < count; i++)
-	{
-		if (auto_cell[ca[i]].out == 1)
+		int number = 0;//一个六面体体素生成四个四个四面体体素
+		for (int i = 0; i < count; i++)
 		{
-			fstream outfile;
-			//outfile.open("d://test1.txt", ios::app);
-			int *asddd = code(ca[i], octree.level_);
-			//outfile << pNode->xLocCode_ << "  " << pNode->yLocCode_ << "  " << pNode->zLocCode_ << "  " << pNode->level_ << "  " << pNode->label_ << "  ";
-			//outfile << IndexX << "  " << IndexY << "  " << IndexZ;
-			//outfile << "LSpace " << ++fuck << "	 nodes  8 ";
-			voxel_output* asd = new voxel_output(asddd[0], asddd[1], asddd[2], octree.level_);
-			//outfile.close();
-			//voxel_output asd(pChildNode, level);
-			asd->output_point2(number);
-			delete asd;
-			number++;
+			if (auto_cell[ca[i]].out == 1)
+			{
+				fstream outfile;
+				//outfile.open("d://test1.txt", ios::app);
+				int *asddd = code(ca[i], octree.level_);
+				//outfile << pNode->xLocCode_ << "  " << pNode->yLocCode_ << "  " << pNode->zLocCode_ << "  " << pNode->level_ << "  " << pNode->label_ << "  ";
+				//outfile << IndexX << "  " << IndexY << "  " << IndexZ;
+				//outfile << "LSpace " << ++fuck << "	 nodes  8 ";
+				voxel_output* asd = new voxel_output(asddd[0], asddd[1], asddd[2], octree.level_);
+				//outfile.close();
+				//voxel_output asd(pChildNode, level);
+				asd->output_point2(number);
+				delete asd;
+				number++;
+			}
 		}
+
+
+
+		outfile.open(test2_dir, ios::app);
+		outfile << "SimpleCS 1 thick 1.0 width 1.0" << endl;
+		outfile << "IsoLE 1 d 0.0102 E 200.0 n 0.394  tAlpha 0.0000780" << endl;
+		outfile << "BoundaryCondition 1 loadTimeFunction 1 prescribedvalue 0.0" << endl;
+		outfile << "ConstantSurfaceLoad 2 ndofs 3 loadType 2 Components 3 0.0 -84.118 0.0 loadTimeFunction 1" << endl;
+		outfile << "ConstantFunction 1 f(t) 1.0" << endl;
+		outfile.close();
+		system("cd /d D:\\oofem\\build2.3\\Debug &oofem.exe&oofem -f test1.txt");
+		read_point_information("D:\\oofem\\build2.3\\Debug\\Majnun.out.m0.1.vtu");
 	}
-
-
-
-	outfile.open("d://test2.txt", ios::app);
-	outfile << "SimpleCS 1 thick 1.0 width 1.0" << endl;
-	outfile << "IsoLE 1 d 0.0102 E 200.0 n 0.394  tAlpha 0.0000780" << endl;
-	outfile << "BoundaryCondition 1 loadTimeFunction 1 prescribedvalue 0.0" << endl;
-	outfile << "ConstantSurfaceLoad 2 ndofs 3 loadType 2 Components 3 0.0 -84.118 0.0 loadTimeFunction 1" << endl;
-	outfile << "ConstantFunction 1 f(t) 1.0" << endl;
-	outfile.close();
-
-
+	//system("cd /d D:\\oofem\\build2.3\\Debug &oofem.exe&oofem -f test1.txt");
 	return 0;
 }
 

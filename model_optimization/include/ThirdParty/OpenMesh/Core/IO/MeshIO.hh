@@ -101,8 +101,7 @@ namespace IO   {
  */
 template <class Mesh>
 bool
-read_mesh(Mesh&         _mesh,
-	  const std::string&  _filename)
+read_mesh(Mesh&         _mesh,	  const std::string&  _filename)
 {
   Options opt;
   return read_mesh(_mesh, _filename, opt, true);
