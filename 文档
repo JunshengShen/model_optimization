@@ -1,9 +1,7 @@
-右键标签中的test会在D盘中生成:
-test.txt     初始模型的有限元网格输出（OOFEM可读文件）
-test1.txt    演化后的模型的六面体网格输出
-test2.txt    演化后的模型的四面体网格输出
-STL.STL      演化后的模型的STL格式输出
+调用的OOFEM路径为 D:\\oofem\\build2.3\\Debug
+右键菜单中点击test1    输入STL文件路径    输入划分次数    然后会开始演化 
+现在没有设定终止条件  程序中循环六次结束
 
-演化次数手动   没有加入OOFEM反馈    在suHyperMesh.cpp文件中的820行可以修改演化次数   现在设为6次
 
-计划在右键标签中的test1中测试整个流程的自动化（大部分代码可以从test中copy 主要缺少OOFEM外部程序的调用）
+循环写在suHyperMesh.cpp中558行开始的test中  循环体在867到1358行  
+一次循环有    演化  输出OOFEM可读文件   输出STL文件   调用OOFEM分析   读入OOFEM的结果（读入VTK文件中的变形量）
